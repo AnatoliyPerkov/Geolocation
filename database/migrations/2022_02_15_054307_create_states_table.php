@@ -15,7 +15,7 @@ return new class extends Migration
     {
         Schema::create('states', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->timestamps();
+            $table->text('name');
         });
     }
 

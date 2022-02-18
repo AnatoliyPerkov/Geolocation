@@ -3,112 +3,87 @@
 namespace App\Http\Controllers\Geolocation;
 
 use App\Http\Controllers\Controller;
-use GuzzleHttp\Client;
+use App\Http\Requests\AddressRequest;
+use App\Repositories\AddressRepository;
+use App\UseCases\Locations\AddressService;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Spatie\Geocoder\Geocoder;
 
 class Home extends Controller
 {
+    private AddressService $service;
+    private AddressRepository $addressRepository;
+
+    /**
+     * Home constructor.
+     * @param AddressService $service
+     * @param AddressRepository $repository
+     */
+    public function __construct(AddressService $service, AddressRepository $repository)
+    {
+        $this->service = $service;
+        $this->addressRepository = $repository;
+    }
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Application|Factory|View
      */
     public function index()
     {
-        $client = new Client();
-
-        $geocoder = new Geocoder($client);
-
-        $geocoder->setApiKey(config('geocoder.key'));
-
-        $geocoder->setCountry(config('geocoder.country', 'US'));
-
-        $geocoder->getCoordinatesForAddress('Infinite Loop 1, Cupertino');
-dd($geocoder->getCoordinatesForAddress('Infinite Loop 1, Cupertino'));
-        /*
-          This function returns an array with keys
-          "lat" =>  37.331741000000001
-          "lng" => -122.0303329
-          "accuracy" => "ROOFTOP"
-          "formatted_address" => "1 Infinite Loop, Cupertino, CA 95014, USA",
-          "viewport" => [
-            "northeast" => [
-              "lat" => 37.3330546802915,
-              "lng" => -122.0294342197085
-            ],
-            "southwest" => [
-              "lat" => 37.3303567197085,
-              "lng" => -122.0321321802915
-            ]
-          ]
-        */
         return view('index');
     }
 
     /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
+     * @param AddressRequest $request
+     * @return RedirectResponse
      */
-    public function create()
+    public function locationCreate(AddressRequest $request)
     {
-        //
+        $latitude = $request->input('lat');
+        $longitude = $request->input('lng');
+
+        try {
+             $this->service->addressCreate($latitude, $longitude);
+        } catch (\DomainException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+        return redirect()->route('home');
+
     }
 
     /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @return string
+     * @throws \Symfony\Component\HttpKernel\Exception\HttpException
+     * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
      */
-    public function store(Request $request)
+    public function getAllLocations()
     {
-        //
+        $locations = $this->addressRepository->allLocations();
+        if (!$locations){
+            abort(404);
+        }
+        return $locations;
     }
 
     /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @param Request $stateId
+     * @return RedirectResponse|void
      */
-    public function show($id)
+    public function getStateAddresses(Request $stateId)
     {
-        //
+        $state = $stateId->input('state');
+        if ($state){
+            $addresses = $this->addressRepository->stateAddresses($state);
+        }else{
+            return back()
+                ->withErrors(['massage' => "state id=[{$stateId}] not found!"])
+                ->withInput();
+        }
+        return $addresses;
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit($id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
-    {
-        //
-    }
 }

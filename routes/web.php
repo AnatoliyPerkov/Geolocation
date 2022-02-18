@@ -13,6 +13,11 @@ use Illuminate\Support\Facades\Route;
 | contains the "web" middleware group. Now create something great!
 |
 */
+Route::get('/', [Home::class,'index'])->name('home');
+Route::post('/create', [Home::class,'locationCreate'])->name('home.locationCreate');
+Route::get('/locations', [Home::class,'getAllLocations'])->name('home.locations');
+Route::get('/addresses', [Home::class,'getStateAddresses'])->name('home.state.addresses');
 
-Route::get('/', [Home::class,'index']);
+
+
 

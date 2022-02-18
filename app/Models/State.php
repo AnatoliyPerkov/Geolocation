@@ -8,4 +8,15 @@ use Illuminate\Database\Eloquent\Model;
 class State extends Model
 {
     use HasFactory;
+    protected $table = 'states';
+    public $timestamps = false;
+
+    protected $fillable = [
+        'name',
+    ];
+
+    public function addresses()
+    {
+        return  $this->hasMany(Address::class);
+    }
 }

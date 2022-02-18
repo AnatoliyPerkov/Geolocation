@@ -13,12 +13,15 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('geolocations', function (Blueprint $table) {
-            $table->id();
+        Schema::create('addresses', function (Blueprint $table) {
+            $table->bigIncrements('id');
             $table->point('coordinate');
             $table->string('street');
             $table->string('city');
-            $table->string('state');
+            $table->unsignedBigInteger('state_id')->nullable();
+            $table->foreign('state_id')
+                ->references('id')
+                ->on('states');
         });
     }
 
@@ -29,6 +32,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('geolocations');
+        Schema::dropIfExists('addresses');
     }
 };
